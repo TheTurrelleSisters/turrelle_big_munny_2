@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>StrayPups Big Munny II — 5 Reel 9 Line v1.0 TEST</title>
-<link rel="manifest" href="manifest.json?v=1.1.12">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=1.1.12">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.1.12">
+<link rel="manifest" href="manifest.json?v=1.1.13">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=1.1.13">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.1.13">
 <meta name="theme-color" content="#0a0a14">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -180,7 +180,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 #red-ov.on{opacity:1;}
 #rs-badge{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#cc0000;color:#fff;padding:5px 16px;border-radius:20px;font-family:Impact,sans-serif;font-size:14px;letter-spacing:2px;display:none;z-index:60;}
 #rs-badge.on{display:block;}
-#splash{position:fixed;inset:0;background:#08000f center/contain no-repeat url("assets/splash_screen.jpg?v=1.1.12");display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6vh;z-index:200;}
+#splash{position:fixed;inset:0;background:#08000f center/contain no-repeat url("assets/splash_screen.jpg?v=1.1.13");display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6vh;z-index:200;}
 #splash::before{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,0,15,0) 55%,rgba(8,0,15,.92) 88%);}
 #splash>*{position:relative;z-index:1;}
 #splash-title{font-family:Impact,sans-serif;color:var(--gold2);font-size:22px;letter-spacing:3px;text-align:center;margin-bottom:8px;}
@@ -334,7 +334,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 </style>
 </head>
 <body>
-<audio id="snd-welcome" src="assets/splash_welcome.wav?v=1.1.12" preload="auto"></audio>
+<audio id="snd-welcome" src="assets/splash_welcome.wav?v=1.1.13" preload="auto"></audio>
 <div id="splash">
   <div id="splash-title">THE TURRELLE SISTERS BIG MUNNY II</div>
   <div id="splash-sub">5 REEL · 9 LINE · BUILD 1.1.12</div>
@@ -344,29 +344,10 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 </div>
 
 
-<!-- VIRTUAL WALLET — opens on INSERT CASH; shows balance + available vouchers -->
-<div id="wallet-ov">
-  <div id="wallet-ov-inner">
-    <div id="wov-handle"><div id="wov-pill"></div></div>
-    <div id="wov-header">
-      <div id="wov-title">My Wallet</div>
-      <button id="wov-close">&#10005;</button>
-    </div>
-    <div id="wov-bal-wrap">
-      <div id="wov-bal-lbl">Wallet Balance</div>
-      <div id="wov-bal">$0.00</div>
-      <div id="wov-nick"></div>
-    </div>
-    <div id="wov-divider"></div>
-    <div id="wov-list-wrap">
-      <div id="wov-list-lbl">Available Vouchers</div>
-      <div id="wov-list"><div id="wov-empty">Loading&#8230;</div></div>
-    </div>
-  </div>
-</div>
+
 
 <div id="wrap">
-  <img id="game-banner" src="assets/banner_art_work.jpg?v=1.1.12" alt="The Turrelle Sisters Big Munny II">
+  <img id="game-banner" src="assets/banner_art_work.jpg?v=1.1.13" alt="The Turrelle Sisters Big Munny II">
   <div id="hdr">
     <div id="hdr-title">THE TURRELLE SISTERS BIG MUNNY II</div>
     <div id="ball-call-badge" style="color:#ffaa00;">● LOCAL</div>
@@ -433,6 +414,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
         <option value="10">10¢</option>
       </select>
       <button class="abtn aic" id="ic-btn">+ INSERT CASH</button>
+      <button class="abtn" id="lobby-btn">⌂ LOBBY</button>
     </div>
   </div>
 </div>
@@ -447,16 +429,17 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 var PROG_GAME_ID = 'turrelle_big_munny_2';
 var PROG_DENOM   = 0.01;
 </script>
-<script src="js/reel_strips.js?v=1.1.12"></script>
-<script src="js/combo_positions.js?v=1.1.12"></script>
-<script src="js/paytable.js?v=1.1.12"></script>
-<script src="js/nowin_pool.js?v=1.1.12"></script>
-<script src="js/wabc.js?v=1.1.12"></script>
-<script src="js/progressive.js?v=1.1.12"></script>
-<script src="js/broadcast-init.js?v=1.1.12"></script>
-<script src="js/game.js?v=1.1.12"></script>
+<script src="js/reel_strips.js?v=1.1.13"></script>
+<script src="js/combo_positions.js?v=1.1.13"></script>
+<script src="js/paytable.js?v=1.1.13"></script>
+<script src="js/nowin_pool.js?v=1.1.13"></script>
+<script src="js/wabc.js?v=1.1.13"></script>
+<script src="js/progressive.js?v=1.1.13"></script>
+<script src="js/broadcast-init.js?v=1.1.13"></script>
+<script src="js/wallet_module.js?v=1.1.13"></script>
+<script src="js/game.js?v=1.1.13"></script>
 <script>
-/* CACHE BUST (v1.1.12): players never clear their cache manually.
+/* CACHE BUST (v1.1.13): players never clear their cache manually.
    - SW script URL is constant (browsers detect updates by byte-diff);
      updateViaCache:'none' stops the browser caching the worker script itself.
    - We poll for updates on load, on tab focus, and hourly.

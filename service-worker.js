@@ -1,5 +1,5 @@
 /* service-worker.js — The Turrelle Sisters Big Munny II
- * CACHE BUST POLICY (v1.1.12): players must NEVER have to clear their cache.
+ * CACHE BUST POLICY (v1.1.13): players must NEVER have to clear their cache.
  *
  *   index.html / navigations  -> NETWORK FIRST (cache only as offline fallback).
  *                                This is what was broken before: the shell was
@@ -13,39 +13,39 @@
  * On activation the new worker deletes every older cache, claims all open pages,
  * and the page reloads itself via the controllerchange listener in index.html.
  */
-var VERSION   = '1.1.12';
+var VERSION   = '1.1.13';
 var CACHE_KEY = 'tsbmii-v' + VERSION;
 var PRECACHE  = [
-  "./index.html?v=1.1.12",
-  "./manifest.json?v=1.1.12",
-  "./js/reel_strips.js?v=1.1.12",
-  "./js/combo_positions.js?v=1.1.12",
-  "./js/paytable.js?v=1.1.12",
-  "./js/nowin_pool.js?v=1.1.12",
-  "./js/wabc.js?v=1.1.12",
-  "./js/progressive.js?v=1.1.12",
-  "./js/broadcast-init.js?v=1.1.12",
-  "./js/game.js?v=1.1.12",
-  "./assets/apple-touch-icon.png?v=1.1.12",
-  "./assets/banner_art_work.jpg?v=1.1.12",
-  "./assets/bell_ring.mp3?v=1.1.12",
-  "./assets/favicon-32.png?v=1.1.12",
-  "./assets/icon-192.png?v=1.1.12",
-  "./assets/icon-512.png?v=1.1.12",
-  "./assets/jackpot_sisters.png?v=1.1.12",
-  "./assets/progressive_pup.png?v=1.1.12",
-  "./assets/red_spin_music.mp3?v=1.1.12",
-  "./assets/reel_spin_loop.wav?v=1.1.12",
-  "./assets/reel_start.wav?v=1.1.12",
-  "./assets/reel_stop.wav?v=1.1.12",
-  "./assets/splash_screen.jpg?v=1.1.12",
-  "./assets/splash_welcome.wav?v=1.1.12",
-  "./assets/sym_1bar.svg?v=1.1.12",
-  "./assets/sym_2bar.svg?v=1.1.12",
-  "./assets/sym_3bar.svg?v=1.1.12",
-  "./assets/sym_blue_7.svg?v=1.1.12",
-  "./assets/sym_cherry.svg?v=1.1.12",
-  "./assets/sym_red_7.svg?v=1.1.12"
+  "./index.html?v=1.1.13",
+  "./manifest.json?v=1.1.13",
+  "./js/reel_strips.js?v=1.1.13",
+  "./js/combo_positions.js?v=1.1.13",
+  "./js/paytable.js?v=1.1.13",
+  "./js/nowin_pool.js?v=1.1.13",
+  "./js/wabc.js?v=1.1.13",
+  "./js/progressive.js?v=1.1.13",
+  "./js/broadcast-init.js?v=1.1.13",
+  "./js/game.js?v=1.1.13",
+  "./assets/apple-touch-icon.png?v=1.1.13",
+  "./assets/banner_art_work.jpg?v=1.1.13",
+  "./assets/bell_ring.mp3?v=1.1.13",
+  "./assets/favicon-32.png?v=1.1.13",
+  "./assets/icon-192.png?v=1.1.13",
+  "./assets/icon-512.png?v=1.1.13",
+  "./assets/jackpot_sisters.png?v=1.1.13",
+  "./assets/progressive_pup.png?v=1.1.13",
+  "./assets/red_spin_music.mp3?v=1.1.13",
+  "./assets/reel_spin_loop.wav?v=1.1.13",
+  "./assets/reel_start.wav?v=1.1.13",
+  "./assets/reel_stop.wav?v=1.1.13",
+  "./assets/splash_screen.jpg?v=1.1.13",
+  "./assets/splash_welcome.wav?v=1.1.13",
+  "./assets/sym_1bar.svg?v=1.1.13",
+  "./assets/sym_2bar.svg?v=1.1.13",
+  "./assets/sym_3bar.svg?v=1.1.13",
+  "./assets/sym_blue_7.svg?v=1.1.13",
+  "./assets/sym_cherry.svg?v=1.1.13",
+  "./assets/sym_red_7.svg?v=1.1.13"
 ];
 
 self.addEventListener('install', function(e){
