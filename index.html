@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>StrayPups Big Munny II — 5 Reel 9 Line v1.0 TEST</title>
-<link rel="manifest" href="manifest.json?v=1.1.15">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=1.1.15">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.1.15">
+<title>The Turrelle Sisters Big Munny II</title>
+<link rel="manifest" href="manifest.json?v=1.1.16">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=1.1.16">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.1.16">
 <meta name="theme-color" content="#0a0a14">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -34,9 +34,9 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 /* BINGO SECTION */
 #bingo-section{display:flex;gap:4px;padding:4px 6px;flex-shrink:0;overflow:hidden;}
 #bingo-card-wrap{flex-shrink:0;}
-#bingo-col-hdrs{display:grid;gap:1px;margin-bottom:2px;}
+#bingo-col-hdrs{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;margin-bottom:1px;}
 .bcol-hdr{text-align:center;font-weight:700;color:var(--gold);font-family:Impact,sans-serif;}
-#bingo-grid{display:grid;gap:1px;}
+#bingo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;}
 .bc{display:flex;align-items:center;justify-content:center;font-weight:700;border-radius:2px;background:#0d1830;border:1px solid #1a3060;color:#8aafdd;font-size:11px;cursor:default;transition:background 0.1s;}
 .bc.free{background:#1a2a0a;color:#88ff44;border-color:#00aa44;}
 .bc.daubed{background:#1a3060;color:#ffe066;border-color:#2a5090;}
@@ -44,11 +44,11 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 .bc.free-winning{background:#3a6a00;color:#88ff44;border-color:#88ff44;}
 #ball-strip-grid{display:flex;flex-direction:column;gap:1px;flex:1;overflow:hidden;}
 .bsr{display:flex;gap:1px;}
-.ball{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border-radius:2px;background:#0d1830;color:#445;font-family:Impact,sans-serif;flex:none;}
-.ball.pre{background:#1a3060;color:#ffe066;}
-.ball.match{background:#1a4a00;color:#88ff44;}
-.ball.called{background:#1a1a40;color:#aaaaff;}
-.ball.empty{background:#060c18;color:transparent;}
+.ball{border-radius:2px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;font-family:Impact,sans-serif;font-size:9px;font-weight:700;flex:none;}
+.ball.pre{color:var(--bingo-yellow);background:rgba(232,192,0,.12);font-weight:700;}
+.ball.match{background:transparent;color:var(--bingo-pink);font-weight:700;}
+.ball.called{color:rgba(255,255,255,.75);background:rgba(255,255,255,.07);}
+.ball.empty{color:transparent;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);box-sizing:border-box;}
 #bingo-pattern-name{text-align:center;font-size:10px;color:var(--gold2);letter-spacing:1px;padding:2px 0;min-height:16px;flex-shrink:0;}
 
 /* REEL SECTION */
@@ -180,7 +180,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 #red-ov.on{opacity:1;}
 #rs-badge{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#cc0000;color:#fff;padding:5px 16px;border-radius:20px;font-family:Impact,sans-serif;font-size:14px;letter-spacing:2px;display:none;z-index:60;}
 #rs-badge.on{display:block;}
-#splash{position:fixed;inset:0;background:#08000f center/contain no-repeat url("assets/splash_screen.jpg?v=1.1.15");display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6vh;z-index:200;}
+#splash{position:fixed;inset:0;background:#08000f center/contain no-repeat url("assets/splash_screen.jpg?v=1.1.16");display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6vh;z-index:200;}
 #splash::before{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,0,15,0) 55%,rgba(8,0,15,.92) 88%);}
 #splash>*{position:relative;z-index:1;}
 #splash-title{font-family:Impact,sans-serif;color:var(--gold2);font-size:22px;letter-spacing:3px;text-align:center;margin-bottom:8px;}
@@ -334,7 +334,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 </style>
 </head>
 <body>
-<audio id="snd-welcome" src="assets/splash_welcome.wav?v=1.1.15" preload="auto"></audio>
+<audio id="snd-welcome" src="assets/splash_welcome.wav?v=1.1.16" preload="auto"></audio>
 <div id="splash">
   <div id="splash-title">THE TURRELLE SISTERS BIG MUNNY II</div>
   <div id="splash-sub">5 REEL · 9 LINE · BUILD 1.1.12</div>
@@ -347,7 +347,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 
 
 <div id="wrap">
-  <img id="game-banner" src="assets/banner_art_work.jpg?v=1.1.15" alt="The Turrelle Sisters Big Munny II">
+  <img id="game-banner" src="assets/banner_art_work.jpg?v=1.1.16" alt="The Turrelle Sisters Big Munny II">
   <div id="hdr">
     <div id="hdr-title">THE TURRELLE SISTERS BIG MUNNY II</div>
     <div id="ball-call-badge" style="color:#ffaa00;">● LOCAL</div>
@@ -429,13 +429,13 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 var PROG_GAME_ID = 'turrelle_big_munny_2';
 var PROG_DENOM   = 0.01;
 </script>
-<script src="js/reel_strips.js?v=1.1.15"></script>
-<script src="js/combo_positions.js?v=1.1.15"></script>
-<script src="js/paytable.js?v=1.1.15"></script>
-<script src="js/nowin_pool.js?v=1.1.15"></script>
-<script src="js/wabc.js?v=1.1.15"></script>
-<script src="js/progressive.js?v=1.1.15"></script>
-<script src="js/broadcast-init.js?v=1.1.15"></script>
+<script src="js/reel_strips.js?v=1.1.16"></script>
+<script src="js/combo_positions.js?v=1.1.16"></script>
+<script src="js/paytable.js?v=1.1.16"></script>
+<script src="js/nowin_pool.js?v=1.1.16"></script>
+<script src="js/wabc.js?v=1.1.16"></script>
+<script src="js/progressive.js?v=1.1.16"></script>
+<script src="js/broadcast-init.js?v=1.1.16"></script>
 <script>
 /* ── TSBMII Wallet cents shim ──
    TSBMII uses S.bal in CENTS (1 credit = $0.01).
@@ -453,8 +453,8 @@ function updUI() {
 function opLog(obj) { /* TSBMII has no opLog — silently ignore */ }
 function sndCreditsAddUp() { /* no equivalent in TSBMII */ }
 </script>
-<script src="js/wallet_module.js?v=1.1.15"></script>
-<script src="js/game.js?v=1.1.15"></script>
+<script src="js/wallet_module.js?v=1.1.16"></script>
+<script src="js/game.js?v=1.1.16"></script>
 <script>
 /* CACHE BUST (v1.1.13): players never clear their cache manually.
    - SW script URL is constant (browsers detect updates by byte-diff);
