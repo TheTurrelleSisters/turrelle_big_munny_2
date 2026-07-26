@@ -2189,90 +2189,8 @@ function _initProgressiveController(){
   };
 
   /* ── Wallet overlay ── */
-  window._openWalletOv=function(){
-    var n=_nick(), balEl=_el('wov-bal'), nickEl=_el('wov-nick'),
-        listEl=_el('wov-list'), ov=_el('wallet-ov');
-    if(!ov) return;
-    if(nickEl) nickEl.textContent = n ? ('\u2605 '+(window._playerNickname||'')) : '';
-    if(listEl) listEl.innerHTML='<div id="wov-empty">Loading\u2026</div>';
-    if(balEl) balEl.textContent='$0.00';
-    ov.classList.add('on');
-    if(!n){
-      if(listEl) listEl.innerHTML='<div id="wov-empty">No nickname set.<br>Return to lobby to log in.</div>';
-      return;
-    }
-    window._sbFetch('wallet?select=balance&nickname=eq.'+encodeURIComponent(n),{})
-      .then(function(d){ if(d&&d[0]&&balEl) balEl.textContent=_fmtD(d[0].balance); })
-      .catch(function(){});
-    window._sbFetch('vouchers?select=id,amount,source_game,created_at'+
-      '&nickname=eq.'+encodeURIComponent(n)+'&status=eq.available&order=created_at.desc',{})
-      .then(function(data){
-        if(!data||!data.length){
-          if(listEl) listEl.innerHTML='<div id="wov-empty">No vouchers available.<br>Return to lobby to generate one.</div>';
-          return;
-        }
-        if(listEl){
-          listEl.innerHTML=data.map(function(v){
-            var d=new Date(v.created_at);
-            var dt=d.toLocaleDateString()+', '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-            var lbl=_gameLabels[v.source_game]||(v.source_game||'Lobby');
-            return '<div class="wov-voucher" onclick="_redeemVoucher('+v.id+','+v.amount+')">'+
-              '<div class="wov-v-icon">\u2b50</div>'+
-              '<div class="wov-v-body"><div class="wov-v-game">'+lbl+'</div>'+
-              '<div class="wov-v-date">'+dt+'</div></div>'+
-              '<div style="text-align:right"><div class="wov-v-amt">'+_fmtD(v.amount)+'</div>'+
-              '<div class="wov-v-use">TAP TO USE</div></div></div>';
-          }).join('');
-        }
-      })
-      .catch(function(){
-        if(listEl) listEl.innerHTML='<div id="wov-empty">Could not load vouchers.<br>Check connection.</div>';
-      });
-  };
-
   /* ── Redeem a voucher: DOLLARS -> CENTS on the way in ── */
-  window._redeemVoucher=function(vid,amount){
-    var n=_nick(); if(!n) return;
-    var listEl=_el('wov-list');
-    if(listEl) listEl.innerHTML='<div id="wov-empty">Redeeming\u2026</div>';
-    window._sbFetch('vouchers?id=eq.'+vid,{
-      method:'PATCH', prefer:'return=minimal',
-      body:{status:'redeemed',redeemed_at:new Date().toISOString()}
-    }).then(function(){
-      var prev=S.bal;
-      S.bal += Math.round(parseFloat(amount)*100);   /* dollars -> cents */
-      updUI();
-      _writeGameHistory({type:'CASH_IN',amount:parseFloat(amount),
-        balBefore:prev/100, balAfter:S.bal/100});
-      var ov=_el('wallet-ov'); if(ov) ov.classList.remove('on');
-      toast(_fmtD(amount)+' LOADED FROM WALLET');
-    }).catch(function(){
-      if(listEl) listEl.innerHTML='<div id="wov-empty">Redemption failed. Try again.</div>';
-    });
-  };
-
   /* ── Cash out: CENTS -> DOLLARS, voucher + wallet balance (SP1D parity) ── */
-  window._doCashOutToWallet=function(amountDollars,onDone){
-    var n=_nick();
-    if(!n||typeof fetch==='undefined'){ onDone(false); return; }
-    var amt=parseFloat(amountDollars);
-    window._sbFetch('vouchers',{
-      method:'POST',
-      body:{nickname:n,amount:amt,status:'available',source_game:GAME_SLUG}
-    }).then(function(){
-      return window._sbFetch('wallet?select=balance&nickname=eq.'+encodeURIComponent(n),{})
-        .then(function(wd){
-          var cur=wd&&wd[0]?parseFloat(wd[0].balance):0;
-          if(isNaN(cur))cur=0;
-          return window._sbFetch('wallet',{
-            method:'POST', prefer:'resolution=merge-duplicates,return=minimal',
-            body:{nickname:n,balance:cur+amt}
-          });
-        });
-    }).then(function(){ onDone(true); })
-      .catch(function(){ onDone(false); });
-  };
-
   /* ── EXIT SWEEP (new in TSBMII) ─────────────────────────────────────────
      Player leaves with credits on the meter -> write them back to the wallet
      as a voucher so nothing is stranded. Uses keepalive so the request still
@@ -2309,14 +2227,14 @@ function _initProgressiveController(){
     if(ov) ov.addEventListener('click',function(e){ if(e.target===ov) ov.classList.remove('on'); });
 
     var ic=_el('ic-btn');
-    if(ic) ic.addEventListener('click',function(){ if(S.spinning) return; window._openWalletOv(); });
+    if(ic) ic.addEventListener('click',function(){ if(S.spinning) return; WalletUI.open(); });
 
     var co=_el('co-btn');
     if(co) co.addEventListener('click',function(){
       if(S.spinning) return;
       if(S.bal<=0){ toast('NOTHING TO CASH OUT'); return; }
       var amtD=Math.round(S.bal)/100;
-      window._doCashOutToWallet(amtD,function(ok){
+      WalletUI.cashOut(function(ok){
         var prev=S.bal;
         S.bal=0; _swept=true;                    /* cashed out — no exit sweep */
         updUI();
@@ -2797,7 +2715,12 @@ window.addEventListener('orientationchange',function(){setTimeout(function(){siz
 /* Wire spin key */
 document.addEventListener('keydown',function(e){if(e.code==='Space'||e.code==='Enter'){e.preventDefault();doSpin();}});
 
+document.getElementById('lobby-btn') && document.getElementById('lobby-btn').addEventListener('click',function(){
+  window.location.href='https://theturrellesisters.github.io/turrelle_gold_coins_casino/';
+});
+
 updUI();
+if(typeof WalletUI!=="undefined")WalletUI.init();
 
 document.addEventListener('touchstart',function _bu(){_bellUnlock();document.removeEventListener('touchstart',_bu);},false);
 document.addEventListener('click',function _bc(){_bellUnlock();document.removeEventListener('click',_bc);},false);
