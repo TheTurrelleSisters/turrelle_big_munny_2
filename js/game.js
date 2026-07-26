@@ -2240,14 +2240,7 @@ function _initProgressiveController(){
         updUI();
         _writeGameHistory({type:'CASH_OUT',amount:amtD,balBefore:prev/100,balAfter:0});
         toast('CASHED OUT '+_fmtD(amtD)+(ok?' \u2022 SAVED TO WALLET':''));
-        setTimeout(function(){
-          var url=LOBBY_URL;
-          try{
-            var ref=document.referrer;
-            if(ref&&ref.indexOf('theturrellesisters.github.io')!==-1) url=ref;
-          }catch(e){}
-          window.location.href=url;
-        },2200);
+        /* Cash out saved — player stays in game */
       });
     });
   });
@@ -2718,7 +2711,6 @@ document.addEventListener('keydown',function(e){if(e.code==='Space'||e.code==='E
 document.getElementById('lobby-btn') && document.getElementById('lobby-btn').addEventListener('click',function(){
   window.location.href='https://theturrellesisters.github.io/turrelle_gold_coins_casino/';
 });
-
 updUI();
 if(typeof WalletUI!=="undefined")WalletUI.init();
 

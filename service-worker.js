@@ -13,7 +13,7 @@
  * On activation the new worker deletes every older cache, claims all open pages,
  * and the page reloads itself via the controllerchange listener in index.html.
  */
-var VERSION   = '1.1.14';
+var VERSION   = '1.1.15';
 var CACHE_KEY = 'tsbmii-v' + VERSION;
 var PRECACHE  = [
   "./index.html?v=1.1.14",
