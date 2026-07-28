@@ -1036,55 +1036,101 @@ function sizeLayout(){
   setTimeout(initReelSlots,50); /* delay so flex layout settles */
 }
 function sizeCard(){
+  /* v1.4.0: sizing math ported verbatim from StrayPups (sizeBingoElements)
+     so the bingo card renders at identical proportions across the sister
+     games. The old version hard-capped the card at 140px
+     (Math.min(vpw*0.36,140)), which kept it tiny on wide screens while
+     StrayPups scaled with the viewport, and used smaller font ratios. */
   var sec=document.getElementById('bingo-section');
   if(!sec) return;
-  var secH=sec.offsetHeight;
+  var bingoH=sec.offsetHeight;
   var vpw=window.innerWidth;
-  var cardW=Math.round(Math.min(vpw*0.36,140));
-  var cellW=Math.max(10,Math.floor((cardW-4)/5));
-  var cellH=Math.min(cellW,Math.max(10,Math.floor((secH-20)/5)));
-  var hdrFsz=Math.max(10,Math.round(cellW*0.55));
-  var grid=document.getElementById('bingo-grid');
-  var hdrs=document.getElementById('bingo-col-hdrs');
-  var wrap=document.getElementById('bingo-card-wrap');
+
+  var cardW=Math.round(vpw*0.34);                      /* uncapped, as SP1D */
+  var cellW=Math.max(10,Math.floor((cardW-4)/5));      /* 4px = 4 gaps of 1px */
   var cardWrapW=(cellW*5)+4;
-  if(wrap){wrap.style.width=cardWrapW+'px';wrap.style.minWidth=cardWrapW+'px';}
+
+  var nameH=18, padV=5;
+  var hdrFontSz=Math.max(10,Math.round(cellW*0.60));
+  var colHdrH=Math.round(hdrFontSz*1.25);
+  var maxCellFromH=Math.max(10,Math.floor((bingoH-nameH-padV-colHdrH-5)/5));
+  var cellH=Math.min(cellW,maxCellFromH);              /* square, never overflows */
+  var cellFontSz=Math.max(8,Math.round(cellH*0.58));
+
+  var grid=document.getElementById('bingo-grid');
   if(grid){
     grid.style.gridTemplateColumns='repeat(5,'+cellW+'px)';
     var cells=grid.querySelectorAll('.bc');
     for(var i=0;i<cells.length;i++){
-      cells[i].style.height=cellH+'px';cells[i].style.width=cellW+'px';
-      cells[i].style.fontSize=Math.max(8,Math.round(cellH*0.5))+'px';
+      cells[i].style.height=cellH+'px';
+      cells[i].style.width=cellW+'px';
+      cells[i].style.minWidth=cellW+'px';
+      cells[i].style.maxWidth=cellW+'px';
+      cells[i].style.fontSize=cellFontSz+'px';
     }
   }
+  var hdrs=document.getElementById('bingo-col-hdrs');
   if(hdrs){
     hdrs.style.gridTemplateColumns='repeat(5,'+cellW+'px)';
+    hdrs.style.width=cardWrapW+'px';
     var hdrCells=hdrs.querySelectorAll('.bcol-hdr');
     for(var h=0;h<hdrCells.length;h++){
-      hdrCells[h].style.width=cellW+'px';hdrCells[h].style.fontSize=hdrFsz+'px';
+      hdrCells[h].style.width=cellW+'px';
+      hdrCells[h].style.minWidth=cellW+'px';
+      hdrCells[h].style.maxWidth=cellW+'px';
+      hdrCells[h].style.fontSize=hdrFontSz+'px';
+      hdrCells[h].style.lineHeight=colHdrH+'px';
     }
   }
+  var wrap=document.getElementById('bingo-card-wrap');
+  if(wrap){
+    wrap.style.width=cardWrapW+'px';
+    wrap.style.minWidth=cardWrapW+'px';
+    wrap.style.maxWidth=cardWrapW+'px';
+    wrap.style.flexShrink='0';
+  }
+  _bingoCellH=cellH; _bingoCardWrapW=cardWrapW;        /* handed to sizeBallStrip */
 }
+
+var _bingoCellH=0, _bingoCardWrapW=0;
+
 function sizeBallStrip(){
+  /* Ported from SP1D: strip width is derived from the viewport rather than
+     offsetWidth (which is 0 before layout settles), and ball height matches
+     the card cell height so the two grids line up exactly. */
   var bsGrid=document.getElementById('ball-strip-grid');
   if(!bsGrid) return;
-  var wrap=document.getElementById('bingo-card-wrap');
-  var sec=document.getElementById('bingo-section');
-  if(!sec||!wrap) return;
-  var secH=sec.offsetHeight;
-  var cellH=Math.max(10,Math.floor((secH-20)/5));
-  var stripW=bsGrid.offsetWidth||100;
-  var slotW=Math.max(7,Math.floor((stripW-14)/15));
-  var ballFsz=Math.max(6,Math.round(slotW*0.65));
+  var vpw=window.innerWidth;
+  var cardWrapW=_bingoCardWrapW||Math.round(vpw*0.34);
+  var cellH=_bingoCellH||14;
+
+  var stripW=vpw-cardWrapW-4-8;                        /* 4px gap, 8px padding */
+  var slotW=Math.max(7,Math.floor((stripW-14)/15));    /* 15 slots, 14 gaps */
+  var ballFontSz=Math.max(6,Math.round(slotW*0.70));
+  var ballH=cellH;
+
+  bsGrid.style.width=stripW+'px';
+  bsGrid._slotW=slotW; bsGrid._ballH=ballH;
+  bsGrid._ballFontSz=ballFontSz; bsGrid._stripW=stripW;
+
+  var rows=bsGrid.querySelectorAll('.bsr');
+  for(var r=0;r<rows.length;r++){
+    rows[r].style.height=ballH+'px';
+    rows[r].style.width=stripW+'px';
+  }
   if(!_ballNodes||_ballNodes.length<75) return;
   for(var i=0;i<75;i++){
     var b=_ballNodes[i];
-    b.style.width=slotW+'px';b.style.minWidth=slotW+'px';
-    b.style.height=cellH+'px';b.style.fontSize=ballFsz+'px';
+    b.style.width=slotW+'px';
+    b.style.minWidth=slotW+'px';
+    b.style.maxWidth=slotW+'px';
+    b.style.height=ballH+'px';
+    b.style.fontSize=ballFontSz+'px';
+    b.style.flex='none';
+    b.style.overflow='hidden';
   }
-  var rows=bsGrid.querySelectorAll('.bsr');
-  for(var r=0;r<rows.length;r++) rows[r].style.height=cellH+'px';
 }
+
 function sizePaylines(){
   var frame=document.getElementById('reel-frame');
   if(!frame) return;

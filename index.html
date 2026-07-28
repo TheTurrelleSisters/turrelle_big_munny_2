@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>The Turrelle Sisters Big Munny II</title>
-<link rel="manifest" href="manifest.json?v=1.1.16">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=1.1.16">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.1.16">
+<link rel="manifest" href="manifest.json?v=1.4.0">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=1.4.0">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.4.0">
 <meta name="theme-color" content="#0a0a14">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +20,7 @@
   --panel:#060c18;--border:#1a3060;--red:#cc2200;--green:#00aa44;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;background:var(--bg);color:#cde;font-family:Georgia,serif;touch-action:manipulation;}
+html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:var(--bg);color:#cde;font-family:Georgia,serif;touch-action:manipulation;}
 #wrap{display:flex;flex-direction:column;max-width:700px;margin:0 auto;height:100vh;height:100dvh;height:var(--app-h,100dvh);overflow:hidden;}
 
 /* HEADER */
@@ -32,31 +32,33 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 #prog-meter-val{font-size:18px;font-weight:700;color:var(--gold2);font-family:Impact,sans-serif;}
 
 /* BINGO SECTION */
-#bingo-section{display:flex;gap:4px;padding:4px 6px;flex-shrink:0;overflow:hidden;}
-#bingo-card-wrap{flex-shrink:0;}
+#bingo-section{-webkit-flex-shrink:0;flex-shrink:0;background:linear-gradient(180deg,#02000a 0%,#060012 100%);border-bottom:2px solid rgba(212,175,55,.3);padding:2px 4px 3px;overflow:hidden;}
+#bingo-card-area{display:-webkit-flex;display:flex;-webkit-flex-direction:row;flex-direction:row;gap:4px;-webkit-align-items:flex-start;align-items:flex-start;-webkit-flex-wrap:nowrap;flex-wrap:nowrap;overflow:hidden;}
+#ball-strip-area{-webkit-flex:1;flex:1;min-width:0;overflow:hidden;}
+#bingo-card-wrap{-webkit-flex-shrink:0;flex-shrink:0;-webkit-flex-grow:0;flex-grow:0;overflow:hidden;}
 #bingo-col-hdrs{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;margin-bottom:1px;}
-.bcol-hdr{text-align:center;font-weight:700;color:var(--gold);font-family:Impact,sans-serif;}
+.bcol-hdr{text-align:center;font-family:var(--fd);font-size:16px;letter-spacing:3px;color:var(--gold-lt);line-height:1;text-shadow:0 0 8px rgba(245,216,120,.6);}
 #bingo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;}
-.bc{display:flex;align-items:center;justify-content:center;font-weight:700;border-radius:2px;background:#0d1830;border:1px solid #1a3060;color:#8aafdd;font-size:11px;cursor:default;transition:background 0.1s;}
-.bc.free{background:#1a2a0a;color:#88ff44;border-color:#00aa44;}
-.bc.daubed{background:#1a3060;color:#ffe066;border-color:#2a5090;}
-.bc.winning{background:#3a6a00;color:#fff;border-color:#88ff44;box-shadow:0 0 4px rgba(100,255,50,.5);}
-.bc.free-winning{background:#3a6a00;color:#88ff44;border-color:#88ff44;}
-#ball-strip-grid{display:flex;flex-direction:column;gap:1px;flex:1;overflow:hidden;}
+.bc{border-radius:2px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;font-family:var(--fd);font-weight:700;background:linear-gradient(135deg,#f5d878,#d4af37);border:2px solid #8b6914;color:#1a0800;-webkit-transition:background .25s;transition:background .25s;box-shadow:inset 0 1px 0 rgba(255,255,200,.4);}
+.bc.free{color:rgba(255,255,255,.6);font-size:8px;}
+.bc.daubed{background:linear-gradient(135deg,#2255cc,#0033aa);border-color:rgba(80,140,255,.6);color:#fff;}
+.bc.winning{background:var(--bingo-pink);border-color:#ff88ee;color:#fff;}
+.bc.free-winning{background:var(--bingo-pink);border-color:#ff88ee;color:rgba(0,0,0,.35);font-size:8px;}
+#ball-strip-grid{display:grid;gap:1px;}
 .bsr{display:flex;gap:1px;}
-.ball{border-radius:2px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;font-family:Impact,sans-serif;font-size:9px;font-weight:700;flex:none;}
+.ball{border-radius:2px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;font-family:var(--fd);-webkit-flex:none;flex:none;overflow:hidden;color:rgba(255,255,255,.13);background:transparent;font-size:inherit;}
 .ball.pre{color:var(--bingo-yellow);background:rgba(232,192,0,.12);font-weight:700;}
 .ball.match{background:transparent;color:var(--bingo-pink);font-weight:700;}
 .ball.called{color:rgba(255,255,255,.75);background:rgba(255,255,255,.07);}
 .ball.empty{color:transparent;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);box-sizing:border-box;}
-#bingo-pattern-name{text-align:center;font-size:10px;color:var(--gold2);letter-spacing:1px;padding:2px 0;min-height:16px;flex-shrink:0;}
+#bingo-pattern-name{font-family:var(--fd);font-size:10px;letter-spacing:1px;color:var(--bingo-pink);text-align:center;padding:1px 0 2px;text-shadow:0 0 8px rgba(238,0,187,.5);min-height:16px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-transition:color .3s;transition:color .3s;}
 
 /* REEL SECTION */
 #reel-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;justify-content:center;}
 /* v1.0.3: reel window capped so it no longer fills all leftover height.
    --reel-h is the single tunable: fraction of visible screen height. */
 :root{--reel-h:0.32;--banner-h:0.13;}
-:root{--sp-gold:#d4af37;--sp-gold-lt:#f5d878;--sp-gold-dk:#8b6914;--fd:'Bebas Neue',Impact,sans-serif;--fm:'Oswald','Arial Narrow',sans-serif;}
+:root{--sp-gold:#d4af37;--sp-gold-lt:#f5d878;--sp-gold-dk:#8b6914;--fd:'Bebas Neue',Impact,sans-serif;--fm:'Oswald','Arial Narrow',sans-serif;--bingo-green:#00dd55;--bingo-yellow:#e8c000;--bingo-pink:#ee00bb;--gold-lt:#f5d878;}
 #game-banner{display:block;width:100%;height:auto;flex-shrink:0;max-height:calc(var(--app-h,100dvh) * var(--banner-h));object-fit:cover;object-position:center;border-bottom:1px solid var(--border);}
 
 #reel-frame{
@@ -70,7 +72,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 /* static ptop/pmid/pbot guide lines removed - replaced by 9 neon payline overlays */
 .reel{flex:1;position:relative;background:#1a0a00;border:2px solid var(--gold);border-radius:10px;overflow:hidden;}
 .reel.wild-reel{border-color:#cc88ff;}
-.reel::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:10;background:linear-gradient(to bottom,rgba(10,3,0,.92) 0%,rgba(10,3,0,0) 20%,rgba(10,3,0,0) 80%,rgba(10,3,0,.92) 100%);}
+.reel::after{content:'';position:absolute;top:0;right:0;bottom:0;left:0;inset:0;pointer-events:none;z-index:10;background:linear-gradient(to bottom,rgba(10,3,0,.92) 0%,rgba(10,3,0,0) 20%,rgba(10,3,0,0) 80%,rgba(10,3,0,.92) 100%);}
 .reel-strip{position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;}
 .reel-slot{width:100%;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .reel-slot-sym{background:#f5f0e8;}
@@ -107,8 +109,12 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 #win-lbl{font-size:9px;color:#8aafdd;letter-spacing:1px;}
 #wval{font-size:16px;font-weight:700;color:var(--gold2);font-family:Impact,sans-serif;}
 #win-msg{font-size:9px;color:var(--gold);min-height:12px;}
-#bt-box{display:none;flex-direction:column;align-items:center;}
-#bt-box.on{display:flex;}
+/* v1.4.0: was display:none -> display:flex, which grew #bottom-strip when the
+   red spin started and shrank it again when it ended, shifting the reel cells
+   both times. The box now always occupies its space and only toggles
+   visibility, so the layout never reflows. */
+#bt-box{display:flex;flex-direction:column;align-items:center;visibility:hidden;}
+#bt-box.on{visibility:visible;}
 #bt-lbl{font-size:8px;color:#ff8844;letter-spacing:1px;}
 #bt-val{font-size:13px;font-weight:700;color:#ff8844;font-family:Impact,sans-serif;}
 
@@ -176,12 +182,12 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 .payline-glow.pl-7{background:linear-gradient(90deg,transparent,#44ffcc 15%,#66ffee 50%,#44ffcc 85%,transparent)!important;}
 .payline-glow.pl-8{background:linear-gradient(90deg,transparent,#ffaa00 15%,#ffcc44 50%,#ffaa00 85%,transparent)!important;}
 .payline-glow.pl-9{background:linear-gradient(90deg,transparent,#ff2222 15%,#ff4444 50%,#ff2222 85%,transparent)!important;}
-#red-ov{position:fixed;inset:0;background:rgba(80,0,0,.5);pointer-events:none;opacity:0;transition:opacity .3s;z-index:50;}
+#red-ov{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:rgba(80,0,0,.5);pointer-events:none;opacity:0;transition:opacity .3s;z-index:50;}
 #red-ov.on{opacity:1;}
 #rs-badge{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#cc0000;color:#fff;padding:5px 16px;border-radius:20px;font-family:Impact,sans-serif;font-size:14px;letter-spacing:2px;display:none;z-index:60;}
 #rs-badge.on{display:block;}
-#splash{position:fixed;inset:0;background:#08000f center/contain no-repeat url("assets/splash_screen.jpg?v=1.1.16");display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6vh;z-index:200;}
-#splash::before{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,0,15,0) 55%,rgba(8,0,15,.92) 88%);}
+#splash{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:#08000f center/contain no-repeat url("assets/splash_screen.jpg?v=1.4.0");display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6vh;z-index:200;}
+#splash::before{content:"";position:absolute;top:0;right:0;bottom:0;left:0;inset:0;background:linear-gradient(to bottom,rgba(8,0,15,0) 55%,rgba(8,0,15,.92) 88%);}
 #splash>*{position:relative;z-index:1;}
 #splash-title{font-family:Impact,sans-serif;color:var(--gold2);font-size:22px;letter-spacing:3px;text-align:center;margin-bottom:8px;}
 #splash-sub{font-size:11px;color:#8aafdd;letter-spacing:2px;margin-bottom:20px;}
@@ -195,7 +201,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 
 /* ── VIRTUAL WALLET (ported from StrayPups $1 for suite parity) ── */
 #wallet-ov{
-  display:none;position:fixed;inset:0;z-index:180;
+  display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:180;
   background:rgba(0,0,0,.7);
   -webkit-align-items:flex-end;align-items:flex-end;
   -webkit-justify-content:center;justify-content:center;
@@ -334,7 +340,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 </style>
 </head>
 <body>
-<audio id="snd-welcome" src="assets/splash_welcome.wav?v=1.1.16" preload="auto"></audio>
+<audio id="snd-welcome" src="assets/splash_welcome.wav?v=1.4.0" preload="auto"></audio>
 <div id="splash">
   <div id="splash-title">THE TURRELLE SISTERS BIG MUNNY II</div>
   <div id="splash-sub">5 REEL · 9 LINE · BUILD 1.1.12</div>
@@ -347,23 +353,27 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 
 
 <div id="wrap">
-  <img id="game-banner" src="assets/banner_art_work.jpg?v=1.1.16" alt="The Turrelle Sisters Big Munny II">
+  <img id="game-banner" src="assets/banner_art_work.jpg?v=1.4.0" alt="The Turrelle Sisters Big Munny II">
   <div id="hdr">
     <div id="hdr-title">THE TURRELLE SISTERS BIG MUNNY II</div>
     <div id="ball-call-badge" style="color:#ffaa00;">● LOCAL</div>
   </div>
 
 
+  <!-- BINGO SECTION: matches StrayPups layout exactly (v1.4.0) -->
   <div id="bingo-section">
-    <div id="bingo-card-wrap">
-      <div id="bingo-col-hdrs" style="display:none;"></div>
-      <div id="bingo-grid"></div>
-    </div>
-    <div style="display:flex;flex-direction:column;flex:1;gap:2px;overflow:hidden;">
-      <div id="ball-strip-grid"></div>
+    <div id="bingo-card-area">
+      <div id="bingo-card-wrap">
+        <div id="bingo-pattern-name">&nbsp;</div>
+        <!-- populated by game.js (buildCard) — must stay empty here -->
+        <div id="bingo-col-hdrs"></div>
+        <div id="bingo-grid"></div>
+      </div>
+      <div id="ball-strip-area">
+        <div id="ball-strip-grid"></div>
+      </div>
     </div>
   </div>
-  <div id="bingo-pattern-name">&nbsp;</div>
 
   <div id="reel-area">
     <div id="reel-frame">
@@ -429,13 +439,13 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;inset:0;bac
 var PROG_GAME_ID = 'turrelle_big_munny_2';
 var PROG_DENOM   = 0.01;
 </script>
-<script src="js/reel_strips.js?v=1.1.16"></script>
-<script src="js/combo_positions.js?v=1.1.16"></script>
-<script src="js/paytable.js?v=1.1.16"></script>
-<script src="js/nowin_pool.js?v=1.1.16"></script>
-<script src="js/wabc.js?v=1.1.16"></script>
-<script src="js/progressive.js?v=1.1.16"></script>
-<script src="js/broadcast-init.js?v=1.1.16"></script>
+<script src="js/reel_strips.js?v=1.4.0"></script>
+<script src="js/combo_positions.js?v=1.4.0"></script>
+<script src="js/paytable.js?v=1.4.0"></script>
+<script src="js/nowin_pool.js?v=1.4.0"></script>
+<script src="js/wabc.js?v=1.4.0"></script>
+<script src="js/progressive.js?v=1.4.0"></script>
+<script src="js/broadcast-init.js?v=1.4.0"></script>
 <script>
 /* ── TSBMII Wallet cents shim ──
    TSBMII uses S.bal in CENTS (1 credit = $0.01).
@@ -453,8 +463,8 @@ function updUI() {
 function opLog(obj) { /* TSBMII has no opLog — silently ignore */ }
 function sndCreditsAddUp() { /* no equivalent in TSBMII */ }
 </script>
-<script src="js/wallet_module.js?v=1.1.16"></script>
-<script src="js/game.js?v=1.1.16"></script>
+<script src="js/wallet_module.js?v=1.4.0"></script>
+<script src="js/game.js?v=1.4.0"></script>
 <script>
 /* CACHE BUST (v1.1.13): players never clear their cache manually.
    - SW script URL is constant (browsers detect updates by byte-diff);
