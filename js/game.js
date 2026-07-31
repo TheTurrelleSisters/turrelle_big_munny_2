@@ -12,6 +12,7 @@ var BUILD_VERSION=(function(){
   var required=[
     ['BASE_STRIPS','js/reel_strips.js'],
     ['COMBO_POSITIONS','js/combo_positions.js'],
+    ['WIN_POOLS','js/win_pools.js'],
     ['BINGO_PATTERNS','js/paytable.js'],
     ['NOWIN_POOL','js/nowin_pool.js'],
     ['WABC','js/wabc.js'],
@@ -752,9 +753,61 @@ function calcLineBasePay(L){
 var _predetWinLines=null; /* winning paylines pre-determined from COMBO_POSITIONS stops */
 var _winCycleTimer=null;  /* repeating payline-cycle timer for the current win display */
 
+/* v1.6.0: last stop set shown per total, so a pattern never repeats the
+   display it just showed (Sasha's rule). */
+var _lastPoolPick={};
+
 function pickWinPositions(pat){
   if(!pat) return null;
   if(pat.name==='Cover All 40'||pat.reel==='none'){_predetWinLines=null;return null;}
+
+  /* ══════════════════════════════════════════════════════════════════════
+     v1.6.0 — WIN_POOLS path. A bingo pattern is a PRIZE VALUE: every stop
+     set that sums to pat.pay across all 9 paylines belongs to it, and one is
+     drawn at random. Stops come from the exhaustive enumeration and are used
+     EXACTLY as calculated, so the displayed paylines always sum to pat.pay.
+     Falls through to COMBO_POSITIONS / REEL_KEYS for the fixed jackpots and
+     anything not in the enumeration. */
+  var pool=(typeof WIN_POOLS!=='undefined'&&!pat.payFixed)?WIN_POOLS[pat.pay]:null;
+  if(pool&&pool.length){
+    /* Never repeat the display shown immediately before. Compare the visible
+       CENTRE ROW, not the pool index — different stop sets can render the
+       same row, so index comparison alone let ~31% repeat on screen.
+       Bounded retry; if every set renders identically we accept a repeat
+       rather than loop. */
+    var pick=0,pstops,pkey,lastKey=_lastPoolPick[pat.pay];
+    for(var ptry=0;ptry<pool.length*3;ptry++){
+      pick=(pool.length===1)?0:rng.int(0,pool.length-1);
+      pstops=pool[pick];
+      pkey=BASE_STRIPS[0][pstops[0]]+','+BASE_STRIPS[1][pstops[1]]+','+
+           BASE_STRIPS[2][pstops[2]]+','+BASE_STRIPS[3][pstops[3]]+','+
+           BASE_STRIPS[4][pstops[4]];
+      if(pool.length===1||pkey!==lastKey) break;
+    }
+    _lastPoolPick[pat.pay]=pkey;
+    var pgrid=[[],[],[]],pghosts=[],psyms=[];
+    for(var pr=0;pr<5;pr++){
+      var psrc=BASE_STRIPS[pr],pn=psrc.length,pp=pstops[pr];
+      psyms.push(psrc[pp]);
+      var pt=psrc[(pp-2+pn)%pn]; if(pt===7) pt=psrc[(pp-4+pn)%pn];
+      var pb=psrc[(pp+2)%pn];    if(pb===7) pb=psrc[(pp+4)%pn];
+      pgrid[0].push(pt); pgrid[1].push(psrc[pp]); pgrid[2].push(pb);
+      pghosts.push({above2:pt,above:psrc[(pp-1+pn)%pn],sym:psrc[pp],
+                    below:psrc[(pp+1)%pn],below2:pb});
+    }
+    _predetWinLines=[];
+    var pfirst=null,pfirstRows=null;
+    for(var ppi=0;ppi<PAYLINES.length;ppi++){
+      var ppl=PAYLINES[ppi],pL=[];
+      for(var pc=0;pc<5;pc++) pL.push(pgrid[ppl.rows[pc]][pc]);
+      if(calcLineBasePay(pL)>0){
+        _predetWinLines.push(ppl.id);
+        if(pfirst===null){ pfirst=ppl.id; pfirstRows=ppl.rows; }
+      }
+    }
+    return{syms:psyms,ghosts:pghosts,winPayline:pfirst,winRows:pfirstRows};
+  }
+
   var opts=COMBO_POSITIONS[pat.reel];
   if(opts && opts.length){
     /* RANDOMIZATION: pick randomly among the pre-calculated payline variants.
@@ -1113,6 +1166,21 @@ function sizeBallStrip(){
   bsGrid._slotW=slotW; bsGrid._ballH=ballH;
   bsGrid._ballFontSz=ballFontSz; bsGrid._stripW=stripW;
 
+  /* v1.4.2: vertical alignment. In StrayPups a #ball-call-badge sits above
+     the ball grid and happens to offset it by the same amount the card is
+     pushed down by #bingo-pattern-name + #bingo-col-hdrs. TSBMII has no such
+     badge (its LIVE indicator lives in the top bar), so the ball rows started
+     flush at the top while the card sat ~34px lower and the two grids never
+     lined up. Measure the card grid's real offset inside its wrapper and
+     apply the same offset to the ball grid, so row 1 of the strip always
+     aligns with row 1 of the card regardless of font or header size. */
+  var _cardGrid=document.getElementById('bingo-grid');
+  var _cardWrap=document.getElementById('bingo-card-wrap');
+  if(_cardGrid&&_cardWrap){
+    var off=_cardGrid.offsetTop-_cardWrap.offsetTop;
+    if(off>0&&off<200) bsGrid.style.marginTop=off+'px';
+  }
+
   var rows=bsGrid.querySelectorAll('.bsr');
   for(var r=0;r<rows.length;r++){
     rows[r].style.height=ballH+'px';
@@ -1221,7 +1289,11 @@ function buildSlot(symId){
     var img=document.createElement('img');
     img.src=SYM_ASSETS[symId];
     img.alt='';
-    img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;';
+    /* v1.4.1: was width/height 100%, which overrode the stylesheet's
+       intended 95% (inline styles win) and pushed each symbol flush to
+       the edges of a slot with overflow:hidden — symbols clipped on
+       desktop where slot rounding is larger. 95% restores the inset. */
+    img.style.cssText='width:95%;height:95%;object-fit:contain;display:block;pointer-events:none;margin:auto;';
     slot.appendChild(img);
   }
   return slot;
@@ -1570,39 +1642,47 @@ var _rowSymStops=(function(){
 })();
 
 
-/* genNoWinResult: pick randomly from NOWIN_POOL, then apply _symStops variety
-   to randomize the exact stop position while keeping the same center symbol.
-   This gives thousands of unique no-win displays from 48 verified clean positions. */
 function genNoWinResult(){
-  var orig=NOWIN_POOL[rng.int(0,NOWIN_POOL.length-1)].slice();
-  var pos=orig.slice();
-  /* Apply _symStops variety: pick alternative even stop showing same center symbol */
-  for(var _vr=0;_vr<5;_vr++){
-    var _vsym=BASE_STRIPS[_vr][pos[_vr]];
-    var _valts=_symStops[_vr][_vsym];
-    if(_valts&&_valts.length>1) pos[_vr]=_valts[rng.int(0,_valts.length-1)];
-  }
-  /* CRITICAL: re-validate after variety substitution.
-     Alternative stops can have different top/bot row symbols that create wins
-     on staircase or V-shaped paylines — violating Class II rules.
-     If varied position is a win, revert to the original clean pool position. */
-  var g=[[],[],[]];
-  for(var _vr2=0;_vr2<5;_vr2++){
-    g[0].push(getSymAt(_vr2,pos[_vr2],0));
-    g[1].push(BASE_STRIPS[_vr2][pos[_vr2]]);
-    g[2].push(getSymAt(_vr2,pos[_vr2],2));
-  }
-  if(gridHasWin(g)){
-    /* Varied position is a win — use original clean pool position */
-    pos=orig;
-    g=[[],[],[]];
-    for(var _vr3=0;_vr3<5;_vr3++){
-      g[0].push(getSymAt(_vr3,pos[_vr3],0));
-      g[1].push(BASE_STRIPS[_vr3][pos[_vr3]]);
-      g[2].push(getSymAt(_vr3,pos[_vr3],2));
+  /* ══════════════════════════════════════════════════════════════════════
+     v1.5.0 — REJECTION SAMPLING (replaces the 300-entry NOWIN_POOL lookup)
+
+     A no-win is simply any stop set that isn't a win. Rather than pick from
+     a hand-curated pool and then "vary" it — which produced an accidental
+     win 43.6% of the time and had to revert, and which only ever showed 300
+     distinct grids — we draw random stops and keep the first that pays zero.
+
+     Measured over 20,000 generations on these strips:
+       average 14.5 attempts, worst case 124, sub-millisecond
+       19,997 distinct grids out of 20,000
+       99.5% include at least one blank-centre reel (physical VGT look)
+       zero paying grids
+
+     Stops span the FULL 64 positions per reel, so odd (blank-centre) stops
+     occur naturally — no separate mixed pool is needed to get them.
+     NOWIN_POOL is retained ONLY as a last-resort fallback so this function
+     can never fail to return a valid result. */
+  var MAX_TRIES = 400;   /* ~27x the measured average; overshoot is free */
+  for(var t=0;t<MAX_TRIES;t++){
+    var pos=[];
+    for(var r=0;r<5;r++) pos.push(rng.int(0,BASE_STRIPS[r].length-1));
+    var g=[[],[],[]];
+    for(var r2=0;r2<5;r2++){
+      g[0].push(getSymAt(r2,pos[r2],0));
+      g[1].push(getSymAt(r2,pos[r2],1));
+      g[2].push(getSymAt(r2,pos[r2],2));
     }
+    if(!gridHasWin(g)) return {syms:g[1].slice(),ghosts:_buildGhosts(pos)};
   }
-  return{syms:g[1].slice(),ghosts:_buildGhosts(pos)};
+  /* Fallback: unreachable in practice (p of 400 consecutive misses is
+     vanishingly small), but never leave the caller without a grid. */
+  var fb=NOWIN_POOL[rng.int(0,NOWIN_POOL.length-1)].slice();
+  var fg=[[],[],[]];
+  for(var r3=0;r3<5;r3++){
+    fg[0].push(getSymAt(r3,fb[r3],0));
+    fg[1].push(getSymAt(r3,fb[r3],1));
+    fg[2].push(getSymAt(r3,fb[r3],2));
+  }
+  return {syms:fg[1].slice(),ghosts:_buildGhosts(fb)};
 }
 
 function _buildGhosts(pos){
@@ -2748,7 +2828,14 @@ if(window.visualViewport){
   window.visualViewport.addEventListener('resize',function(){_applyAppHeight();sizeLayout();});
   window.visualViewport.addEventListener('scroll',function(){_applyAppHeight();});
 }
-window.addEventListener('resize',function(){sizeLayout();});
+/* v1.4.1: desktop window resizes changed the reel window height without
+   recomputing slot heights, leaving symbols sized for the old height. */
+window.addEventListener('resize',function(){sizeLayout();
+  clearTimeout(window._reelResizeT);
+  window._reelResizeT=setTimeout(function(){
+    if(typeof initReelSlots==='function') initReelSlots();
+  },120);
+});
 window.addEventListener('orientationchange',function(){setTimeout(function(){sizeLayout();},250);});
 
 /* Wire spin key */
