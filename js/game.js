@@ -919,6 +919,11 @@ var _celebCardLocked = false;
 var _celebCardSnapshot = null;
 var _rsCardLocked = false;
 var _rsCardSnapshot = null;
+/* v1.9.0: set when BLACKOUT (all 25) is reached while the card is locked
+   during Red Spin. The card then stays frozen on the blacked-out display
+   until the bonus finishes AND the player presses play — the pending new
+   sequence is not applied before that. */
+var _blackoutHold = false;
 var _pendingNewSeq = null;
 var _spinDebounce = 0;
 var _spinWatchdog = null;
@@ -1976,12 +1981,21 @@ function _onServerBallPos(newPos){
     var _bball=BG.callSeq[_bp];
     if(BG.cardNumSet[_bball]!==undefined) BG.matchedCells[BG.cardNumSet[_bball]]=true;
   }
-  if(GS.state==='active'&&!S.spinning&&!_celebCardLocked) renderBingoCard(BG.card,BG.matchedCells,null);
+  /* v1.9.0: while the card is locked for Red Spin we still repaint, so the
+     player sees the call continuing to daub. Once blackout is reached the
+     card is held on the blacked-out state and no longer repainted. */
+  if(GS.state==='active'&&!_celebCardLocked&&!_blackoutHold&&(!S.spinning||_rsCardLocked))
+    renderBingoCard(BG.card,BG.matchedCells,null);
   renderBallStrip(BG.callSeq,BG.ballPos,BG.cardNumSet);
   if(!BG._coverAll75Fired&&!BG.awaitingNewSeq&&Object.keys(BG.matchedCells).length===25){
     /* Class II rule (Sasha): Cover All can only be AWARDED on a spin. */
     BG._coverAll75Fired=true;BG.seqExhausted=true;BG.awaitingNewSeq=true;
     BG._coverAllPending=true;
+    /* v1.9.0: blackout while locked -> freeze on the blacked-out card. */
+    if(_rsCardLocked){
+      _blackoutHold=true;
+      renderBingoCard(BG.card,BG.matchedCells,null);
+    }
     _requestNewWABCSeq();
   }
 }
@@ -1997,6 +2011,10 @@ function _acquireRsCardLock(){
 }
 function _releaseRsCardLock(){
   _rsCardLocked=false;_rsCardSnapshot=null;
+  /* v1.9.0: if blackout was reached during the bonus, hold the blacked-out
+     card. The pending sequence is applied by _applyPendingSeq() on the next
+     spin press, not here. */
+  if(_blackoutHold) return;
   if(_pendingNewSeq){
     var _pSeq=_pendingNewSeq.seq;_pendingNewSeq=null;
     BG.callSeq=_pSeq;BG.ballPos=40;BG.usingServerBalls=true;BG.seqExhausted=false;BG.awaitingNewSeq=false;BG._coverAll75Fired=false;
@@ -2009,7 +2027,14 @@ function _releaseRsCardLock(){
 }
 
 /* ── RED SPIN ── */
-function runRS(rsPatterns,onDone){
+/* v1.8.0: baseAmt is passed in so the win box can show the RUNNING TOTAL
+   (base + bonus so far) at every step. Previously each Red Spin step
+   overwrote the box with only that step's pay, so the running total was
+   never visible and the trigger spin's award appeared to vanish.
+   Award ORDER is unchanged: rsPatterns arrives sorted lowest->highest
+   and is stepped through in that order. */
+function runRS(rsPatterns,onDone,baseAmt){
+  baseAmt=baseAmt||0;
   if(!rsPatterns||rsPatterns.length===0){onDone(0);return;}
   var frame2=document.getElementById('reel-frame');
   var redOv=document.getElementById('red-ov');
@@ -2020,6 +2045,9 @@ function runRS(rsPatterns,onDone){
   redOv.classList.add('on');badge.classList.add('on');
   sndRsMusicStart(); /* v1.0: music while screen is red */
   btBox.classList.add('on');btVal.textContent='$0.00';
+  /* v1.8.0: carry the triggering spin's award into Red Spin instead of
+     leaving a stale or zero figure on screen. */
+  if(baseAmt>0) setWin(baseAmt,'RED SPIN \u2014 TOTAL SO FAR');
   var bonusTotal=0;var seqIdx=0;
   /* betLvl = bet MULTIPLIER 1..20 (total credits / 9 lines). Award:wager ratio
      is unchanged by the getTotalBet fix, so RTP stays 96.26%. */
@@ -2063,8 +2091,13 @@ function runRS(rsPatterns,onDone){
       _pnEl&&_pnEl.classList.remove('pn-flash');
       void (_pnEl&&_pnEl.offsetWidth); /* force reflow to restart animation */
       _pnEl&&_pnEl.classList.add('pn-flash');
-      var _rsCard=(_rsCardSnapshot?_rsCardSnapshot.card:BG.card);
-      var _rsMatched=(_rsCardSnapshot?_rsCardSnapshot.matchedCells:BG.matchedCells);
+      /* v1.9.0: the card is LOCKED (a new ball sequence is deferred by
+         _rsCardLocked) but must KEEP DAUBING, so render the live BG.card /
+         BG.matchedCells rather than the snapshot taken at Red Spin start.
+         Rendering the snapshot froze the daubs for the whole bonus.
+         Once blackout is reached the display holds on the blacked-out card. */
+      var _rsCard=BG.card;
+      var _rsMatched=BG.matchedCells;
       renderBingoCard(_rsCard,_rsMatched,pat.cells);
       setTimeout(function(){
         var _rsGrid=getVisibleGrid();
@@ -2086,7 +2119,9 @@ function runRS(rsPatterns,onDone){
         }
         bonusTotal+=payAmt;S.bal+=payAmt;updUI();
         btVal.textContent=centsToDisplay(bonusTotal);
-        setWin(payAmt,'RED SPIN \u2014 '+pat.name.toUpperCase()+'!');
+        /* v1.8.0: running total, with this step's contribution named. */
+        setWin(baseAmt+bonusTotal,'RED SPIN \u2014 '+pat.name.toUpperCase()+
+               ' +'+centsToDisplay(payAmt));
         /* Cancel any previous pattern's cycle timer before starting this one,
            so the winning lines/symbols stay continuously lit until THIS
            pattern's result replaces them - no gap between awards. */
@@ -2480,7 +2515,7 @@ function updateBallCallBadge(){
 function _refreshSpinWatchdog(){
   if(_spinWatchdog) clearTimeout(_spinWatchdog);
   _spinWatchdog=setTimeout(function(){
-    if(S.spinning){console.warn('[Watchdog] Spin stuck >20s');_releaseRsCardLock();S.spinning=false;setCtrl(true);updUI();}
+    if(S.spinning){console.warn('[Watchdog] Spin stuck >20s');_blackoutHold=false;_releaseRsCardLock();S.spinning=false;setCtrl(true);updUI();}
   },20000);
 }
 function _clearSpinWatchdog(){if(_spinWatchdog){clearTimeout(_spinWatchdog);_spinWatchdog=null;}}
@@ -2507,6 +2542,12 @@ function doSpin(){
     if(Progressive.registerPlayer) Progressive.registerPlayer(null, window._playerNickname || null);
     if(Progressive.updateLastSpin) Progressive.updateLastSpin();
     if(Progressive.contribute) Progressive.contribute(totalBet/100);
+  }
+  /* v1.9.0: a blackout reached during Red Spin holds the blacked-out card
+     until the player presses play — this is that moment. */
+  if(_blackoutHold){
+    _blackoutHold=false;
+    _releaseRsCardLock();
   }
   setWin(0,'');document.getElementById('bt-box').classList.remove('on');
   updUI();setCtrl(false);_refreshSpinWatchdog();
@@ -2649,7 +2690,7 @@ function doSpin(){
           startPatternCycle(winPatterns);
           _releaseRsCardLock();
           _spinDebounce=Date.now();updUI();_clearSpinWatchdog();S.spinning=false;setCtrl(true);
-        });
+        },baseAmt);
       },600);return;
     }
     startPatternCycle(winPatterns);
