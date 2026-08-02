@@ -1897,7 +1897,7 @@ function doBingoSpin(){
   }
   if(!BG.callSeq||BG.callSeq.length!==75){
     toast('Ball call unavailable - please wait');
-    S.spinning=false;S.bal+=getTotalBet();setCtrl(true);updUI();return null;
+    S.spinning=false;_applyPendingSeq();S.bal+=getTotalBet();setCtrl(true);updUI();return null;
   }
   BG.card=genBingoCard();
   BG.cardNumSet={};
@@ -1951,7 +1951,7 @@ function _requestNewWABCSeq(){
     if(_newSeq.length!==75) return;
     if(window._wabcChannel){window._wabcChannel.send({type:'broadcast',event:'new_call',payload:{sequence:_newSeq,issued_at:_newIAt}});}
     if(typeof WABC!=='undefined'&&WABC.applyLocalNewCall) WABC.applyLocalNewCall(_newSeq,_newIAt);
-    if(_rsCardLocked){_pendingNewSeq={seq:_newSeq,issuedAt:_newIAt};BG.awaitingNewSeq=false;BG.seqExhausted=false;BG._coverAll75Fired=false;updateBallCallBadge();return;}
+    if(_cardChangeBlocked()){_pendingNewSeq={seq:_newSeq,issuedAt:_newIAt};BG.awaitingNewSeq=false;BG.seqExhausted=false;BG._coverAll75Fired=false;updateBallCallBadge();return;}
     BG.callSeq=_newSeq;BG.ballPos=40;BG.usingServerBalls=true;BG.seqExhausted=false;BG.awaitingNewSeq=false;BG._coverAll75Fired=false;
     if(BG.card&&Object.keys(BG.cardNumSet).length>0){
       BG.matchedCells={12:true};
@@ -2009,21 +2009,37 @@ function _acquireRsCardLock(){
   var snapNumSet={};var _nk=Object.keys(BG.cardNumSet);for(var _ni=0;_ni<_nk.length;_ni++) snapNumSet[_nk[_ni]]=BG.cardNumSet[_nk[_ni]];
   _rsCardSnapshot={card:snapCard,callSeq:snapCallSeq,matchedCells:snapMatched,cardNumSet:snapNumSet};
 }
+/* v1.10.0: the card must not be replaced mid-spin either. Previously only
+   _rsCardLocked deferred a new sequence, so if the ball call rolled over or
+   Cover All fired DURING a normal spin the card refreshed underneath the
+   player. Any of these three states now holds it. */
+function _cardChangeBlocked(){
+  return _rsCardLocked || _blackoutHold || S.spinning;
+}
+
+/* Apply a sequence that was parked while the card was locked. Safe to call
+   repeatedly — it no-ops once the pending sequence is consumed. */
+function _applyPendingSeq(){
+  if(!_pendingNewSeq || _cardChangeBlocked()) return;
+  var _pSeq=_pendingNewSeq.seq;_pendingNewSeq=null;
+  BG.callSeq=_pSeq;BG.ballPos=40;BG.usingServerBalls=true;
+  BG.seqExhausted=false;BG.awaitingNewSeq=false;BG._coverAll75Fired=false;
+  if(BG.card&&Object.keys(BG.cardNumSet).length>0){
+    BG.matchedCells={12:true};
+    for(var _ri=0;_ri<40;_ri++){var _rb=_pSeq[_ri];if(BG.cardNumSet[_rb]!==undefined) BG.matchedCells[BG.cardNumSet[_rb]]=true;}
+    if(GS.state==='active'&&!_celebCardLocked) renderBingoCard(BG.card,BG.matchedCells,null);
+    renderBallStrip(BG.callSeq,40,BG.cardNumSet);
+  }
+  updateBallCallBadge();
+}
+
 function _releaseRsCardLock(){
   _rsCardLocked=false;_rsCardSnapshot=null;
   /* v1.9.0: if blackout was reached during the bonus, hold the blacked-out
      card. The pending sequence is applied by _applyPendingSeq() on the next
      spin press, not here. */
   if(_blackoutHold) return;
-  if(_pendingNewSeq){
-    var _pSeq=_pendingNewSeq.seq;_pendingNewSeq=null;
-    BG.callSeq=_pSeq;BG.ballPos=40;BG.usingServerBalls=true;BG.seqExhausted=false;BG.awaitingNewSeq=false;BG._coverAll75Fired=false;
-    if(BG.card&&Object.keys(BG.cardNumSet).length>0){
-      BG.matchedCells={12:true};
-      for(var _ri=0;_ri<40;_ri++){var _rb=_pSeq[_ri];if(BG.cardNumSet[_rb]!==undefined) BG.matchedCells[BG.cardNumSet[_rb]]=true;}
-    }
-    updateBallCallBadge();
-  }
+  _applyPendingSeq();
 }
 
 /* ── RED SPIN ── */
@@ -2515,7 +2531,7 @@ function updateBallCallBadge(){
 function _refreshSpinWatchdog(){
   if(_spinWatchdog) clearTimeout(_spinWatchdog);
   _spinWatchdog=setTimeout(function(){
-    if(S.spinning){console.warn('[Watchdog] Spin stuck >20s');_blackoutHold=false;_releaseRsCardLock();S.spinning=false;setCtrl(true);updUI();}
+    if(S.spinning){console.warn('[Watchdog] Spin stuck >20s');_blackoutHold=false;_releaseRsCardLock();S.spinning=false;_applyPendingSeq();setCtrl(true);updUI();}
   },20000);
 }
 function _clearSpinWatchdog(){if(_spinWatchdog){clearTimeout(_spinWatchdog);_spinWatchdog=null;}}
@@ -2526,6 +2542,14 @@ function doSpin(){
   if(BG.awaitingNewSeq){toast('New ball sequence loading \u2014 please wait');return;}
   var totalBet=getTotalBet(); /* already in cents */
   if(S.bal<totalBet){toast('INSUFFICIENT CREDITS');return;}
+  /* v1.10.0: release a blackout hold BEFORE S.spinning goes true, so the fresh
+     card is dealt on the press rather than surfacing at the end of the spin.
+     _cardChangeBlocked() includes S.spinning, so doing this afterwards would
+     park the new sequence for the whole spin. */
+  if(_blackoutHold){
+    _blackoutHold=false;
+    _releaseRsCardLock();
+  }
   S.spinning=true;
   /* Cancel any running win-cycle animation and clear all glows the moment spin is pressed */
   if(_winCycleTimer){clearInterval(_winCycleTimer);_winCycleTimer=null;}
@@ -2542,12 +2566,6 @@ function doSpin(){
     if(Progressive.registerPlayer) Progressive.registerPlayer(null, window._playerNickname || null);
     if(Progressive.updateLastSpin) Progressive.updateLastSpin();
     if(Progressive.contribute) Progressive.contribute(totalBet/100);
-  }
-  /* v1.9.0: a blackout reached during Red Spin holds the blacked-out card
-     until the player presses play — this is that moment. */
-  if(_blackoutHold){
-    _blackoutHold=false;
-    _releaseRsCardLock();
   }
   setWin(0,'');document.getElementById('bt-box').classList.remove('on');
   updUI();setCtrl(false);_refreshSpinWatchdog();
@@ -2594,7 +2612,7 @@ function doSpin(){
       _writeGameHistory({type:'SPIN',bet:totalBet/100,win:0,
         balBefore:_balBefore,balAfter:S.bal/100,patterns:[],balls:0}); /* v1.0.7 */
       setWin(0,'NO BINGO');
-      _spinDebounce=Date.now();_clearSpinWatchdog();S.spinning=false;setCtrl(true);updUI();return;
+      _spinDebounce=Date.now();_clearSpinWatchdog();S.spinning=false;_applyPendingSeq();setCtrl(true);updUI();return;
     }
     /* betLvl = bet MULTIPLIER 1..20 (total credits / 9 lines). Award:wager ratio
      is unchanged by the getTotalBet fix, so RTP stays 96.26%. */
@@ -2670,7 +2688,7 @@ function doSpin(){
     if(_progPat){
       toast('PROGRESSIVE JACKPOT! (Prototype \u2014 no claim in test)');
       startPatternCycle(winPatterns);
-      _spinDebounce=Date.now();_clearSpinWatchdog();S.spinning=false;setCtrl(true);updUI();return;
+      _spinDebounce=Date.now();_clearSpinWatchdog();S.spinning=false;_applyPendingSeq();setCtrl(true);updUI();return;
     }
 
     if(rsPatterns.length>0){
@@ -2689,12 +2707,12 @@ function doSpin(){
           document.getElementById('bt-box').classList.remove('on');
           startPatternCycle(winPatterns);
           _releaseRsCardLock();
-          _spinDebounce=Date.now();updUI();_clearSpinWatchdog();S.spinning=false;setCtrl(true);
+          _spinDebounce=Date.now();updUI();_clearSpinWatchdog();S.spinning=false;_applyPendingSeq();setCtrl(true);
         },baseAmt);
       },600);return;
     }
     startPatternCycle(winPatterns);
-    _spinDebounce=Date.now();_clearSpinWatchdog();S.spinning=false;setCtrl(true);updUI();
+    _spinDebounce=Date.now();_clearSpinWatchdog();S.spinning=false;_applyPendingSeq();setCtrl(true);updUI();
   });
 }
 
@@ -2756,7 +2774,7 @@ window.addEventListener('load',function(){
       WABC.onChange(function(newPos){_onServerBallPos(newPos);});
       WABC.onNewCall(function(newSeq){
         if(!newSeq||newSeq.length!==75) return;
-        if(_rsCardLocked){_pendingNewSeq={seq:newSeq,issuedAt:null};BG.awaitingNewSeq=false;BG.seqExhausted=false;BG._coverAll75Fired=false;updateBallCallBadge();return;}
+        if(_cardChangeBlocked()){_pendingNewSeq={seq:newSeq,issuedAt:null};BG.awaitingNewSeq=false;BG.seqExhausted=false;BG._coverAll75Fired=false;updateBallCallBadge();return;}
         _applySeq(newSeq, true);
         if(GS.state==='active'&&BG.card&&Object.keys(BG.cardNumSet).length>0){
           BG.matchedCells={12:true};
